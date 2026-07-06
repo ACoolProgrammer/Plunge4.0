@@ -285,8 +285,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7de61f94aa76ac49b518d988ad10c4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gravityModifierX: 4
-  gravityModifierY: 4
+  globalGravityModifier: 1
 --- !u!50 &386945214
 Rigidbody2D:
   serializedVersion: 5
