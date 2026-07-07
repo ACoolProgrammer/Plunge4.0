@@ -39,6 +39,18 @@ void Update() {
     }
 }
 
+void Update() {
+    if (Input.GetKeyUp(KeyCode.W)){
+        
+    } 
+    if (Input.GetKey(KeyCode.A)){
+        
+    } 
+    if (Input.GetKey(KeyCode.D)){
+        
+    } 
+}
+
 void UpdateGlobalGravity() {
     Physics2D.gravity = new Vector2(gravityStrengthX, gravityStrengthY);
 }
