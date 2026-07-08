@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     {
         // Get the Rigidbody2D component attached to the player
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0;
+        globalGravityModifier = 1;
     }
 
     
@@ -37,18 +37,6 @@ void Update() {
         gravityStrengthY = 0;
         UpdateGlobalGravity();
     }
-}
-
-void Update() {
-    if (Input.GetKeyUp(KeyCode.W)){
-        
-    } 
-    if (Input.GetKey(KeyCode.A)){
-        
-    } 
-    if (Input.GetKey(KeyCode.D)){
-        
-    } 
 }
 
 void UpdateGlobalGravity() {
