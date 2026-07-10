@@ -9,7 +9,7 @@ public class StartGame : MonoBehaviour
   [SerializeField] private Animator animator;
     public async void PlayGame()
 {
-  AsyncOperation op = SceneManager.LoadSceneAsync("MainLevel");
+  AsyncOperation op = SceneManager.LoadSceneAsync("Level1");
 
   await op;
 

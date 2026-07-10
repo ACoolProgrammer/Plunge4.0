@@ -1,46 +1,61 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
+    public float jumpForce = 7f;
 
     [Header("Gravity Settings")]
     public float globalGravityModifier = 1f;
     private float gravityStrengthX = 0;
-    private float gravityStrengthY = -9.81f; // Default standard gravity
+    private float gravityStrengthY = -9.81f;
 
+    [Header("Ground Check")]
+    public Transform groundCheck;
+    public float checkRadius = 0.2f;
+    public LayerMask whatIsGround;
+
+    //Private
+
+    private bool isGrounded;
     private Rigidbody2D rb;
-    private CustomInput input = new CustomInput();
-    private Vector2 moveInput = Vector2.zero;
+    private float moveInputX = 0f;
+    private float groundCheckDisableTimer = 0f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        
-        // Initialize gravity to standard downward pull
+
         gravityStrengthY = -9.81f * globalGravityModifier;
         UpdateGlobalGravity();
     }
 
-    private void OnEnable()
+    private void Update()
     {
-        input.Enable();
-        input.Player.Movement.performed += OnMovementPerformed;
-        input.Player.Movement.canceled += OnMovementCanceled;
-    }
+        moveInputX = 0f;
+        if (Input.GetKey(KeyCode.D))
+        {
+            moveInputX = 1f;
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            moveInputX = -1f;
+        }
 
-    private void OnDisable()
-    {
-        input.Disable();
-        input.Player.Movement.performed -= OnMovementPerformed;
-        input.Player.Movement.canceled -= OnMovementCanceled;
-    }
+        // --- Reverse Ceiling Controls ---
+        if (Physics2D.gravity.y > 0.1f)
+        {
+            moveInputX *= -1f;
+        }
 
-    private void Update() 
-    {
-        HandleGravityInput();
+        CheckIfGrounded();
+
+        if (isGrounded)
+        {
+            GravityInput();
+            JumpInput();
+        }
     }
 
     private void FixedUpdate()
@@ -48,66 +63,105 @@ public class PlayerController : MonoBehaviour
         MovePlayerRelativeToGravity();
     }
 
-    private void OnMovementPerformed(InputAction.CallbackContext value)
+    private void CheckIfGrounded()
     {
-        moveInput = value.ReadValue<Vector2>();
+        if (groundCheck == null) return;
+
+        // If the cooldown timer is active, force grounded to false and count down
+        if (groundCheckDisableTimer > 0)
+        {
+            groundCheckDisableTimer -= Time.deltaTime;
+            isGrounded = false;
+            return;
+        }
+
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
     }
 
-    private void OnMovementCanceled(InputAction.CallbackContext value)
+    private void JumpInput()
     {
-        moveInput = Vector2.zero;
-    }
+        // Triggers when pressing the W key
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            // Find "Up" direction (opposite of gravity vector)
+            Vector2 gravityDir = Physics2D.gravity.normalized;
+            Vector2 jumpDirection = -gravityDir;
 
-    private void HandleGravityInput()
-    {
-        // Standard gravity strength baseline
-        float gravityMagnitude = 9.81f * globalGravityModifier;
+            // Remove existing velocity along the gravity axis before applying jump force
+            float currentFallVelocity = Vector2.Dot(rb.linearVelocity, gravityDir);
+            rb.linearVelocity -= gravityDir * currentFallVelocity;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow)) {
-            gravityStrengthX = 0;
-            gravityStrengthY = gravityMagnitude;
-            UpdateGlobalGravity();
-        } 
-        else if (Input.GetKeyDown(KeyCode.DownArrow)) {
-            gravityStrengthX = 0;
-            gravityStrengthY = -gravityMagnitude;
-            UpdateGlobalGravity();
-        } 
-        else if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-            gravityStrengthX = -gravityMagnitude;
-            gravityStrengthY = 0;
-            UpdateGlobalGravity();
-        } 
-        else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-            gravityStrengthX = gravityMagnitude;
-            gravityStrengthY = 0;
-            UpdateGlobalGravity();
+            // Apply the jump force vector
+            rb.AddForce(jumpDirection * jumpForce, ForceMode2D.Impulse);
         }
     }
 
-    void UpdateGlobalGravity() 
+    private void GravityInput()
+{
+    float gravityMagnitude = 9.81f * globalGravityModifier;
+    bool gravityChanged = false;
+
+    if (Input.GetKeyDown(KeyCode.UpArrow)) {
+        gravityStrengthX = 0;
+        gravityStrengthY = gravityMagnitude;
+        gravityChanged = true;
+    } 
+    else if (Input.GetKeyDown(KeyCode.DownArrow)) {
+        gravityStrengthX = 0;
+        gravityStrengthY = -gravityMagnitude;
+        gravityChanged = true;
+    } 
+    else if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+        gravityStrengthX = -gravityMagnitude;
+        gravityStrengthY = 0;
+        gravityChanged = true;
+    } 
+    else if (Input.GetKeyDown(KeyCode.RightArrow)) {
+        gravityStrengthX = gravityMagnitude;
+        gravityStrengthY = 0;
+        gravityChanged = true;
+    }
+
+    if (gravityChanged)
     {
-        Physics2D.gravity = new Vector2(gravityStrengthX, gravityStrengthY);
+        UpdateGlobalGravity();
+        // Disable ground checking for 0.15 seconds to let the player leave the floor
+        groundCheckDisableTimer = 0.15f; 
+        isGrounded = false; 
+    }
+}
+
+    void UpdateGlobalGravity()
+    {
+        Vector2 newGravity = new Vector2(gravityStrengthX, gravityStrengthY);
+        Physics2D.gravity = newGravity;
+
+        Vector2 gravityDir = newGravity.normalized;
+        if (gravityDir == Vector2.zero) return;
+
+        // Set angle based on on downward gravity
+        float angle = Mathf.Atan2(gravityDir.y, gravityDir.x) * Mathf.Rad2Deg;
+
+        // Offset by 90 degrees
+        transform.rotation = Quaternion.Euler(0, 0, angle + 90f);
     }
 
     private void MovePlayerRelativeToGravity()
     {
-        // 1. Find the local "Down" direction based on current gravity vector
         Vector2 gravityDir = Physics2D.gravity.normalized;
 
         if (gravityDir == Vector2.zero) return;
 
-        // 2. Calculate the local "Right" vector perpendicular to gravity
-        // This ensures pressing right always moves clockwise relative to gravity
+        // Calculate the local "Right" vector perpendicular to gravity
         Vector2 localRight = new Vector2(-gravityDir.y, gravityDir.x);
 
-        // 3. Project horizontal input onto the local horizontal plane
-        Vector2 movementDirection = localRight * moveInput.x;
+        // Project A/D input onto the local horizontal plane
+        Vector2 movementDirection = localRight * moveInputX;
 
-        // 4. Retain existing velocity along the gravity axis (so falling works)
+        // Retain existing velocity along the gravity axis (falling/jumping)
         float currentFallVelocity = Vector2.Dot(rb.linearVelocity, gravityDir);
-        
-        // 5. Apply the combined velocities
+
+        // Apply the combined velocities
         rb.linearVelocity = movementDirection * moveSpeed + (gravityDir * currentFallVelocity);
     }
 }
