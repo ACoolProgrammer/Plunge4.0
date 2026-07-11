@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
@@ -12,8 +12,8 @@ public class PlayerController : MonoBehaviour
     private float gravityStrengthY = -9.81f;
 
     [Header("Ground Check")]
-    public Transform groundCheck;
-    public float checkRadius = 0.2f;
+    public float checkOffsetDistance = 1.0f;
+    public float checkRadius = 0.3f;
     public LayerMask whatIsGround;
 
     //Private
@@ -47,15 +47,14 @@ public class PlayerController : MonoBehaviour
         if (Physics2D.gravity.y > 0.1f)
         {
             moveInputX *= -1f;
+            
         }
 
         CheckIfGrounded();
 
-        if (isGrounded)
-        {
-            GravityInput();
-            JumpInput();
-        }
+        GravityInput();
+        JumpInput();
+
     }
 
     private void FixedUpdate()
@@ -65,7 +64,6 @@ public class PlayerController : MonoBehaviour
 
     private void CheckIfGrounded()
     {
-        if (groundCheck == null) return;
 
         // If the cooldown timer is active, force grounded to false and count down
         if (groundCheckDisableTimer > 0)
@@ -75,13 +73,18 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
+        Vector2 gravityDir = Physics2D.gravity.normalized;
+        if (gravityDir.sqrMagnitude < 0.01f) return;
+
+        Vector2 checkPosition = (Vector2)transform.position + (gravityDir * checkOffsetDistance);
+
+        isGrounded = Physics2D.OverlapCircle(checkPosition, checkRadius, whatIsGround);
     }
 
     private void JumpInput()
     {
         // Triggers when pressing the W key
-        if (Input.GetKeyDown(KeyCode.W))
+        if (Input.GetKeyDown(KeyCode.W) && isGrounded)
         {
             // Find "Up" direction (opposite of gravity vector)
             Vector2 gravityDir = Physics2D.gravity.normalized;
@@ -98,6 +101,8 @@ public class PlayerController : MonoBehaviour
 
     private void GravityInput()
 {
+    if (!isGrounded) return;
+
     float gravityMagnitude = 9.81f * globalGravityModifier;
     bool gravityChanged = false;
 
@@ -137,12 +142,10 @@ public class PlayerController : MonoBehaviour
         Physics2D.gravity = newGravity;
 
         Vector2 gravityDir = newGravity.normalized;
-        if (gravityDir == Vector2.zero) return;
+        if (gravityDir.sqrMagnitude < 0.01f) return;
 
         // Set angle based on on downward gravity
         float angle = Mathf.Atan2(gravityDir.y, gravityDir.x) * Mathf.Rad2Deg;
-
-        // Offset by 90 degrees
         transform.rotation = Quaternion.Euler(0, 0, angle + 90f);
     }
 
@@ -150,7 +153,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 gravityDir = Physics2D.gravity.normalized;
 
-        if (gravityDir == Vector2.zero) return;
+        if (gravityDir.sqrMagnitude < 0.01f) return;
 
         // Calculate the local "Right" vector perpendicular to gravity
         Vector2 localRight = new Vector2(-gravityDir.y, gravityDir.x);
@@ -163,5 +166,16 @@ public class PlayerController : MonoBehaviour
 
         // Apply the combined velocities
         rb.linearVelocity = movementDirection * moveSpeed + (gravityDir * currentFallVelocity);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Vector2 gravityDir = Physics2D.gravity.normalized;
+        
+        if (gravityDir.sqrMagnitude < 0.01f) gravityDir = Vector2.down;
+
+        Vector2 checkPosition = (Vector2)transform.position + (gravityDir * checkOffsetDistance);
+        UnityEngine.Gizmos.color = UnityEngine.Color.green;
+        UnityEngine.Gizmos.DrawWireSphere(checkPosition, checkRadius);
     }
 }
