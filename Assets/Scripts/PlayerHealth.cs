@@ -1,15 +1,12 @@
+using System.Collections.Collecctions; // Added so IEnumerator works
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
-<<<<<<< HEAD
-    public int maxHealth = 5;
-    public int currentHealth;
-=======
     [Header("Health Settings")]
     public int maxHealth = 5;
-    private int currentHealth;
+    public int currentHealth; // Kept public from HEAD so other scripts can read it if needed
 
     [Header("Invincibility Settings")]
     public float invincibilityDuration = 1.5f;
@@ -19,54 +16,42 @@ public class PlayerHealth : MonoBehaviour
     public SpriteRenderer playerSprite;
 
     private HealthUI healthUIScript;
->>>>>>> main
 
-    void start()
+    void Start() // Fixed typo: capitalized 'S' so Unity runs this automatically
     {
         currentHealth = maxHealth;
-<<<<<<< HEAD
-=======
 
-        healthUIScript = FindFirstObjectByType<healthUIScript>();
+        // Fixed typo: Looked for 'HealthUI' component class name instead of variable name
+        healthUIScript = FindFirstObjectByType<HealthUI>();
 
         if (healthUIScript != null) healthUIScript.UpdateHealthUI(currentHealth, maxHealth);
 
         if (playerSprite == null) playerSprite = GetComponent<SpriteRenderer>();
-    
->>>>>>> main
     }
 
     public void TakeDamage(int damageAmount)
     {
-<<<<<<< HEAD
-        currentHealth -= damageAmount;
-        Debug.Log("Player took damage! Current health" + currentHealth);
-
-=======
         if (isInvincible) return;
 
         currentHealth -= damageAmount;
         Debug.Log("Player took damage! Current health" + currentHealth);
 
-        if (healthUIScript != null) healthUIScript.UpdateHealthUI(currentHealth, maxHealth)
+        if (healthUIScript != null) healthUIScript.UpdateHealthUI(currentHealth, maxHealth); // Fixed typo: added missing semicolon
 
->>>>>>> main
-        if (currentHealth < 0)
+        if (currentHealth <= 0) // Changed to <= 0 so player dies exactly at 0 health
         {
             Die();
         }
-<<<<<<< HEAD
-=======
         else
         {
-            StartCprputine(BecomeInvincible());
+            StartCoroutine(BecomeInvincible()); // Fixed typo: misspelled 'StartCoroutine'
         }
     }
 
     private IEnumerator BecomeInvincible()
     {
         isInvincible = true;
-        float timer = 0
+        float timer = 0f; // Fixed typo: added missing semicolon and 'f' literal
 
         while (timer < invincibilityDuration)
         {
@@ -77,12 +62,11 @@ public class PlayerHealth : MonoBehaviour
 
         if (playerSprite != null) playerSprite.enabled = true;
         isInvincible = false;
->>>>>>> main
     }
 
     private void Die()
     {
         Debug.Log("Player Has Died");
-        AsyncOperation op = SceneManager.LoadSceneAsync("MainMenu");
+        SceneManager.LoadScene("MainMenu"); // Simplified scene loading for a Main Menu
     }
 }
