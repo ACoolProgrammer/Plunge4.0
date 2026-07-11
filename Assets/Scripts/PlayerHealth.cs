@@ -1,4 +1,4 @@
-using System.Collections.Collecctions; // Added so IEnumerator works
+using System.Collections; // Added so IEnumerator works
 using UnityEngine;
 using UnityEngine.SceneManagement;
 

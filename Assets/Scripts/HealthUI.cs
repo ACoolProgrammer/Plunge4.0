@@ -1,5 +1,5 @@
 using UnityEngine;
-using TMpro;
+using TMPro;
 
 public class HealthUI : MonoBehaviour
 {
@@ -9,12 +9,7 @@ public class HealthUI : MonoBehaviour
     {
         if (healthText != null)
         {
-            
+            healthText.text = "Health: " + currentHealth + "/" + maxHealth;
         }
     }
-}
-
-public class HealthUI
-{
-    
 }
