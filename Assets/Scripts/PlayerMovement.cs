@@ -4,7 +4,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
-    public float jumpForce = 7f;
+    public float jumpForce = 5f;
 
     [Header("Gravity Settings")]
     public float globalGravityModifier = 1f;

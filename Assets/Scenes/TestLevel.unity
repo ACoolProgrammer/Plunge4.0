@@ -674,7 +674,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 5
   currentHealth: 0
-  invincibilityDuration: 1.5
+  invincibilityDuration: 0.5
   playerSprite: {fileID: 0}
 --- !u!1 &390442727
 GameObject:
